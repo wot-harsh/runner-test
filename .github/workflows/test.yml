@@ -1,4 +1,4 @@
-name: Runner Test
+name: Docker Test
 
 on:
   push:
@@ -6,13 +6,24 @@ on:
       - main
 
 jobs:
-  test:
+  docker-test:
     runs-on: [self-hosted, staging]
 
     steps:
-      - name: Test Runner
+      - uses: actions/checkout@v4
+
+      - name: Stop Old Container
         run: |
-          echo "RUNNER WORKING SUCCESSFULLY"
-          hostname
-          whoami
-          pwd
+          docker stop github-runner-test || true
+          docker rm github-runner-test || true
+
+      - name: Build Docker Image
+        run: |
+          docker build -t github-runner-image .
+
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+            --name github-runner-test \
+            -p 8080:80 \
+            github-runner-image
